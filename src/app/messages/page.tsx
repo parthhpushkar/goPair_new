@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { Suspense, useEffect, useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -9,6 +9,14 @@ import { getInitials, timeAgo } from '@/lib/utils';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 export default function MessagesPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><LoadingSpinner /></div>}>
+      <MessagesContent />
+    </Suspense>
+  );
+}
+
+function MessagesContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();

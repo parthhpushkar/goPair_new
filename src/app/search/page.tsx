@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { FiFilter, FiSliders, FiX } from 'react-icons/fi';
@@ -9,6 +9,14 @@ import RideCard from '@/components/rides/RideCard';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 export default function SearchPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><LoadingSpinner /></div>}>
+      <SearchContent />
+    </Suspense>
+  );
+}
+
+function SearchContent() {
   const searchParams = useSearchParams();
   const [rides, setRides] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
