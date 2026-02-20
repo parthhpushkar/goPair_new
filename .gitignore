@@ -1,0 +1,9 @@
+node_modules/
+.next/
+.env
+.env.local
+.env.production
+*.db
+*.db-journal
+.vercel
+goPair_Project_Documentation.md

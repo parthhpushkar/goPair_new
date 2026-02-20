@@ -1,0 +1,192 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  phone         String?   @unique
+  bio           String?
+  rating        Float     @default(0)
+  totalRides    Int       @default(0)
+  verified      Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  ridesOffered  Ride[]           @relation("DriverRides")
+  bookings      Booking[]
+  reviewsGiven  Review[]         @relation("ReviewAuthor")
+  reviewsReceived Review[]       @relation("ReviewTarget")
+  messagesSent  Message[]        @relation("SentMessages")
+  messagesReceived Message[]     @relation("ReceivedMessages")
+  notifications Notification[]
+  vehicles      Vehicle[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Vehicle {
+  id        String   @id @default(cuid())
+  make      String
+  model     String
+  year      Int
+  color     String
+  plate     String
+  userId    String
+  createdAt DateTime @default(now())
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rides Ride[]
+}
+
+model Ride {
+  id            String   @id @default(cuid())
+  driverId      String
+  vehicleId     String?
+  origin        String
+  destination   String
+  originLat     Float?
+  originLng     Float?
+  destLat       Float?
+  destLng       Float?
+  departureDate DateTime
+  departureTime String
+  estimatedArrival String?
+  seats         Int
+  availableSeats Int
+  price         Float
+  description   String?
+  status        String   @default("active") // active, completed, cancelled
+  recurring     Boolean  @default(false)
+  allowPets     Boolean  @default(false)
+  allowSmoking  Boolean  @default(false)
+  allowLuggage  Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  driver   User      @relation("DriverRides", fields: [driverId], references: [id])
+  vehicle  Vehicle?  @relation(fields: [vehicleId], references: [id])
+  bookings Booking[]
+  reviews  Review[]
+  stops    Stop[]
+}
+
+model Stop {
+  id      String @id @default(cuid())
+  rideId  String
+  name    String
+  order   Int
+  lat     Float?
+  lng     Float?
+  price   Float?
+
+  ride Ride @relation(fields: [rideId], references: [id], onDelete: Cascade)
+}
+
+model Booking {
+  id        String   @id @default(cuid())
+  rideId    String
+  userId    String
+  seats     Int      @default(1)
+  status    String   @default("pending") // pending, confirmed, cancelled, completed
+  totalPrice Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ride Ride @relation(fields: [rideId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  rideId    String
+  authorId  String
+  targetId  String
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  ride   Ride @relation(fields: [rideId], references: [id])
+  author User @relation("ReviewAuthor", fields: [authorId], references: [id])
+  target User @relation("ReviewTarget", fields: [targetId], references: [id])
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  senderId   String
+  receiverId String
+  content    String
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  sender   User @relation("SentMessages", fields: [senderId], references: [id])
+  receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Otp {
+  id        String   @id @default(cuid())
+  phone     String
+  code      String
+  expiresAt DateTime
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([phone])
+}
